@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>DQ風ゲーム</title>
+	<link href="jquery-ui.css" rel="stylesheet">
+	<link href="style.css" rel="stylesheet">
+	<style>
+		#gametext{
+			border:gray solid 2px;
+			border-radius: 5px;
+			height: 10em;
+			overflow: scroll;
+		}
+	</style>
+</head>
+<body>
+	<h1>DQ風ゲーム</h1>
+	<div id="statext"></div>
+	<div id="gametext"></div>
+	<div id="command" style="display: none"></div>
+	<div class="ui-button ui-widget" id="start">START</div>
+	<div class="ui-button ui-widget" id="end" style="display: none"></div>
+	<script>
+		window.nodeRequire = require;
+		delete window.require;
+		delete window.exports;
+		delete window.module;
+	</script>
+	<script src="external/jquery/jquery.js"></script>
+	<script src="jquery-ui.js"></script>
+	<script>
+		let running=false;
+		let nowbuttle=false;
+		let playerHP;
+		let enmHP;
+		let normaldamage;
+		const enmdamage=4;
+		const type=["パンチ","アクア","ウッド","フレイム"];
+		const score=[1,1.5,0.5];
+		let enemy;
+		$('#start').click(function(){
+			if(!running){
+				running=true;
+				playerHP=20;
+				enmHP=15;
+				normaldamage=5;
+				enemy=Math.floor(Math.random()*(type.length-1)+1);
+				$('#start').css('display','none');
+				$('#statext').text("自分のHP:"+playerHP);
+				$('#gametext').prepend(type[enemy]+"スライムが現れた！");
+				$('#command').css('display','block').append('<div class="ui-button ui-widget" id="buttle">たたかう</div>');
+				$('#command').append('<div  class="ui-button ui-widget" id="escape">逃げる</div>');
+				$('#buttle').click(function(){
+					if(!nowbuttle){
+						nowbuttle=true;
+						let i=0;
+						while(i<type.length){
+							$('#buttle').after('<br><div class="ui-button ui-widget" id="slctw" onclick="damagefunc('+enemy+','+i+')">'+type[i]+'</div>');
+							i++;
+						}
+					}
+				});
+				$('#escape').click(function(){
+					let charennge=Math.floor(Math.random()*101);
+					if(charennge>=30){
+						$('#gametext').prepend("うまく逃げ切れた！<br>");
+						$('#command').empty();
+						$('#escape').remove();
+						$('#end').css('display','inline-block').text('もう一度');
+					}
+					else{
+						$('#gametext').prepend("逃げられなかった！<br>");
+						damagefunc(enemy,-1)
+					}
+				});
+			}
+		});
+		function damagefunc(enemy,wptype){
+			let enmmotion=Math.floor(Math.random()*11);
+			//プレイヤーの攻撃
+			let btlresult=(wptype-enemy+3)%3;
+			if(wptype==0){
+				enmHP-=normaldamage;
+				$('#gametext').prepend(type[enemy]+"スライムに"+normaldamage+"ダメージ！<br>あなたの"+type[wptype]+"！<br>");
+				$('#statext').text("自分のHP:"+playerHP);
+			}
+			if(0<wptype&&wptype<4){
+				let realdamage=Math.floor(normaldamage*score[btlresult]);
+				enmHP-=realdamage;
+				$('#gametext').prepend(type[enemy]+"スライムに"+realdamage+"ダメージ！<br>あなたの"+type[wptype]+"！<br>");
+				if(btlresult==1) $('#gametext').prepend("効果がかなりあるようだ！<br>");
+				if(btlresult==2) $('#gametext').prepend("効果はあまりないようだ…<br>");
+			}
+			if(enmHP<=0){
+				$('#gametext').prepend(type[enemy]+"スライムは倒れた！あなたの勝ち！<br>");
+				$('#escape').remove();
+				$('#command').empty();
+				$('#end').css('display','inline-block').text('もう一度');
+			}
+			//スライムの攻撃
+			else{
+				if(enmmotion<=3){
+					normaldamage--;
+					if(normaldamage<=0) normaldamage=1;
+					$('#gametext').prepend("攻撃が下がった！<br>"+type[enemy]+"の呪い！<br>");
+				}
+				else{
+					playerHP-=enmdamage;
+					$('#gametext').prepend("自分に"+enmdamage+"のダメージ！<br>"+type[enemy]+"スライムの攻撃！<br>")
+					$('#statext').text("自分のHP:"+playerHP);
+				}
+			}
+			if(playerHP<=0){
+				$('#statext').text("自分のHP:0");
+				$('#gametext').prepend("あなたは倒れた！あなたの負け！<br>");
+				$('#escape').remove();
+				$('#command').empty();
+				$('#end').css('display','inline-block').text('もう一度');
+			}
+			console.log(enmHP);
+			console.log(playerHP);
+		}
+		$('#end').click(function(){
+			if(running){
+				running=false;
+				nowbuttle=false;
+				$('#end').css('display','none');
+				$('#statext').empty();
+				$('#gametext').empty();
+				$('#command').empty();
+				$('#start').css('display','inline-block').text("START");
+			}
+		});
+	</script>
+</body>
+</html>
