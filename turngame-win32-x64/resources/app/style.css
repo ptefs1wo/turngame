@@ -1,0 +1,30 @@
+.contain
+{
+	text-align: center;
+}
+.ui-button.active{
+	opacity: 1.0;
+}
+.ui-button.inactive{
+	opacity: 0.5;
+}
+.ui-button .ui-icon-color-red{
+	background-image: url("images/ui-icons_cc0000_256x240.png");
+}
+.ui-button .ui-icon-color-white{
+	background-image: url("images/ui-icons_ffffff_256x240.png");
+}
+.ui-button-row{
+	background-color: #396FDC;
+}
+.ui-num{
+	width:3.1em;
+	margin:0;
+	padding:0;
+	text-align: center;
+	display: inline-block;
+	border:1px solid gray;
+}
+.ui-button-row+.ui-button-row,.ui-num+.ui-num{
+	margin-left:0.2em;
+}
