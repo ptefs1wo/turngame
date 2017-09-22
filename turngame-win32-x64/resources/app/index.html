@@ -18,11 +18,33 @@
 	.enemyfaze:before{
 		content: "▲";
 	}
+	.slcsq{
+		padding:0.5em;
+		display: inline-block;
+	}
+	.slime{
+		width: 3em;
+		height: 1.7em;
+		display: inline-block;
+		text-align: center;
+		background-color: pink;
+		border-radius: 50% 50% 25% 25%;
+	}
+	.flame{
+		background-color: #D75211
+	}
+	.aqua{
+		background-color: #1E58DA
+	}
+	.wood{
+		background-color: #1B7621
+	}
 </style>
 </head>
 <body>
 	<h1>DQ風ゲーム</h1>
 	<div id="statext">PRESS START</div>
+	<div id="enmvisual"></div>
 	<div id="gametext"></div>
 	<div id="command" style="display: none"></div>
 	<div class="ui-button ui-widget" id="start">START</div>
@@ -36,13 +58,18 @@
 	<script src="external/jquery/jquery.js"></script>
 	<script src="jquery-ui.js"></script>
 	<script>
-		let running=false;
+		//敵のHPランダム化
 		let nowbuttle=false;
-		let playerHP;
+		let nowstage=0;
+		let playerHP=20;
+		const enmarray=[];
+		const enmsHP=[5,11,16];
 		let enmHP;
 		let normaldamage;
+		let painheal=10;
 		const enmdamage=4;
 		const type=["パンチ","アクア","ウッド","フレイム"];
+		const typeclass={"アクア":"aqua","ウッド":"wood","フレイム":"flame"};
 		const score=[1,2,0.5];
 		let enemy;
 		const pidtop='<span class="playerfaze">';
@@ -52,25 +79,36 @@
 			Startgame()
 		});
 		function Startgame(){
-			if(!running){
-				running=true;
-				playerHP=20;
-				enmHP=15;
+			if(nowstage<3){
+				if(nowstage==0) playerHP=20;
+				else this.playerHP=playerHP;
+				enmarray.push(Math.floor(Math.random()*enmsHP[nowstage])+11);
+				enmHP=enmarray[nowstage];
 				normaldamage=3;
 				enemy=Math.floor(Math.random()*(type.length-1)+1);
 				$('#start').css('display','none');
 				$('#statext').text("自分のHP:"+playerHP+""+type[enemy]+"スライムのHP:"+enmHP);
-				$('#gametext').prepend(type[enemy]+"スライムが現れた！");
+				$('#enmvisual').html('<div class="slcsq"><div class="slime '+typeclass[type[enemy]]+'">● ●</div></div>');
+				$('#gametext').prepend(type[enemy]+"スライムが現れた！<br>");
 				$('#command').css('display','block').append('<div class="ui-button ui-widget" id="buttle">たたかう</div>');
-				$('#command').append('<div  class="ui-button ui-widget" id="escape">逃げる</div>');
+				$('#command').append('<div  class="ui-button ui-widget" id="escape">逃げる</div>').append('<div class="ui-button ui-widget" id="item">どうぐ</div>');
 				$('#buttle').click(function(){
-					if(!nowbuttle){
+					if((nowstage<3)&&(!nowbuttle)){
 						nowbuttle=true;
 						let i=0;
 						while(i<type.length){
 							$('#buttle').after('<br><div class="ui-button ui-widget" id="slctw" onclick="Pdamagefunc('+i+')">'+type[i]+'</div>');
 							i++;
 						}
+					}
+				});
+				$('#item').click(function(){
+					if(playerHP<20){
+						playerHP+=painheal;
+						playerHP=Math.min(playerHP,20);
+						$('#gametext').prepend(pidtop+"あなたは傷薬を使って"+painheal+"回復した！"+peidtail);
+						$('#statext').text("自分のHP:"+playerHP+""+type[enemy]+"スライムのHP:"+enmHP);
+						Edamagefunc();
 					}
 				});
 				$('#escape').click(function(){
@@ -95,7 +133,7 @@
 			else btlresult=(wptype-enemy+3)%3;
 			let realdamage=Math.floor((normaldamage+rnddamage)*score[btlresult]);
 			enmHP-=realdamage;
-			if(enmHP<0) enmHP=0;
+			enmHP=Math.max(enmHP,0);
 			$('#gametext').prepend(pidtop+"あなたの"+type[wptype]+"！"+peidtail).prepend(pidtop+type[enemy]+"スライムに"+realdamage+"ダメージ！"+peidtail);
 			if(btlresult==1) $('#gametext').prepend("効果がかなりあるようだ！<br>");
 			if(btlresult==2) $('#gametext').prepend("効果はあまりないようだ…<br>");
@@ -104,7 +142,13 @@
 				$('#gametext').prepend(type[enemy]+"スライムは倒れた！あなたの勝ち！<br>");
 				$('#escape').remove();
 				$('#command').empty();
-				$('#end').css('display','inline-block').text('もう一度');
+				nowstage++;
+				nowbuttle=false;
+				if(nowstage<3) Startgame();
+				else{
+					$('#end').css('display','inline-block').text('もう一度');
+					nowstage=0;
+				}
 			}
 			else Edamagefunc();
 		}
@@ -112,7 +156,7 @@
 			let enmmotion=Math.floor(Math.random()*11);
 			if(enmmotion<=3){
 				normaldamage-=2;
-				if(normaldamage<=0) normaldamage=1;
+				normaldamage=Math.max(normaldamage,1);
 				//$('#gametext').prepend("あなたの攻撃が下がった！<br>"+type[enemy]+"の呪い！<br>");
 				$('#gametext').prepend(eidtop+""+type[enemy]+"の呪い！"+peidtail).prepend("あなたの攻撃が下がった！<br>");
 			}
@@ -131,15 +175,16 @@
 			}
 		}
 		$('#end').click(function(){
-			if(running){
-				running=false;
-				nowbuttle=false;
-				$('#end').css('display','none');
-				$('#statext').text("PRESS START");
-				$('#gametext').empty();
-				$('#command').empty();
-				$('#start').css('display','inline-block').text("START");
+			nowbuttle=false;
+			while(enmarray.length>0){
+				enmarray.pop();
 			}
+			$('#end').css('display','none');
+			$('#statext').text("PRESS START");
+			$('#gametext').empty();
+			$('#enmvisual').empty();
+			$('#command').empty();
+			$('#start').css('display','inline-block').text("START");
 		});
 	</script>
 </body>
